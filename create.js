@@ -3,9 +3,8 @@ import AWS from 'aws-sdk';
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 
 
-export function post (req, res, callback) {
-    const timestamp = new Date().getTime();
-    const dynamoDBparams = {
+export function getPostParams (req, res, next) {
+    res.locals.dynamoDBparams = {
         TableName: process.env.DYNAMODB_TABLE,
         Item: {
             userId: req.body.username,
@@ -16,7 +15,29 @@ export function post (req, res, callback) {
             createdAt: new Date().getTime()
         }
     };
+    next();
+}
 
+export function getCommentParams(req, res, next) {
+    res.locals.dynamoDBparams = {
+        TableName: process.env.COMMENTS_TABLE,
+        Item: {
+            protocolNumber: Number.parseInt(req.params.id),
+            commentDate: new Date().getTime(),
+            userId: req.params.userId,
+            commentId: uuid.v1(),
+            content: req.body.content
+        }
+    };
+    next();
+}
+
+
+
+
+export function post(req, res, callback) {
+    console.log(res.locals)
+    let dynamoDBparams = res.locals.dynamoDBparams
     dynamoDb.put(dynamoDBparams, (error) => {
         // handle potential errors
         if (error) {

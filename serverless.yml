@@ -11,7 +11,7 @@
 #
 # Happy Coding!
 
-service: protocols
+service: accords
 
 provider:
   name: aws
@@ -21,6 +21,12 @@ provider:
   environment:
     SERVICE_NAME: ${self:service}
     DYNAMODB_TABLE: ${self:service}-${self:provider.stage}
+    PROTOCOL_INDEX: ${self:service}-${self:provider.stage}/index/*
+    COMMENTS_TABLE: ${self:service}-${self:provider.stage}-comments
+    ACTIONS_TABLE: ${self:service}-${self:provider.stage}-actions
+    ACTIONS_INDEX: ${self:service}-${self:provider.stage}-actions/index/*
+    DOSSIERS_TABLE: ${self:service}-${self:provider.stage}-dossiers
+    DOSSIERS_INDEX: ${self:service}-${self:provider.stage}-dossiers/index/*
   iamRoleStatements:
     - Effect: Allow
       Action:
@@ -30,7 +36,14 @@ provider:
         - dynamodb:PutItem
         - dynamodb:UpdateItem
         - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}"
+      Resource: 
+        - arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DYNAMODB_TABLE}
+        - arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.PROTOCOL_INDEX}
+        - arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.COMMENTS_TABLE}
+        - arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.ACTIONS_TABLE}
+        - arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.ACTIONS_INDEX}
+        - arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DOSSIERS_TABLE}
+        - arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.DOSSIERS_INDEX}
     - Effect: Allow
       Action:
         - ses:SendEmail
@@ -52,7 +65,7 @@ plugins:
 custom:
   webpackIncludeModules: true
   customDomain:
-    domainName: 'protocols.scottify.io' # Change this to your domain.
+    domainName: 'api.scottify.io' # Change this to your domain.
     basePath: '' # This will be prefixed to all routes
     stage: ${self:provider.stage}
     createRoute53Record: true
@@ -92,3 +105,66 @@ resources:
             ProvisionedThroughput:
               ReadCapacityUnits: 1
               WriteCapacityUnits: 1
+    CommentsTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:provider.environment.COMMENTS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: protocolNumber
+            AttributeType: N
+          - AttributeName: commentDate
+            AttributeType: N
+        KeySchema:
+          - AttributeName: protocolNumber
+            KeyType: HASH
+          - AttributeName: commentDate
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+    ActionsTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:provider.environment.ACTIONS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: actionId
+            AttributeType: S
+          - AttributeName: actionDate
+            AttributeType: N
+          - AttributeName: userId
+            AttributeType: S
+          - AttributeName: completed
+            AttributeType: N
+        KeySchema:
+          - AttributeName: actionId
+            KeyType: HASH
+          - AttributeName: actionDate
+            KeyType: RANGE
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        GlobalSecondaryIndexes:
+          - IndexName: user-actions
+            KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+            - AttributeName: completed
+              KeyType: RANGE
+            Projection:
+              ProjectionType: ALL
+            ProvisionedThroughput:
+              ReadCapacityUnits: 1
+              WriteCapacityUnits: 1
+    DossiersTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        TableName: ${self:provider.environment.DOSSIERS_TABLE}
+        AttributeDefinitions:
+          - AttributeName: subject
+            AttributeType: S
+        KeySchema:
+          - AttributeName: subject
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1

@@ -8,7 +8,7 @@
     "ProtocolsLogGroup": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
-        "LogGroupName": "/aws/lambda/protocols-prod-protocols"
+        "LogGroupName": "/aws/lambda/accords-prod-protocols"
       }
     },
     "IamRoleLambdaExecution": {
@@ -37,7 +37,7 @@
                 "-",
                 [
                   "prod",
-                  "protocols",
+                  "accords",
                   "lambda"
                 ]
               ]
@@ -52,7 +52,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/protocols-prod-protocols:*"
+                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/accords-prod-protocols:*"
                     }
                   ]
                 },
@@ -63,7 +63,7 @@
                   ],
                   "Resource": [
                     {
-                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/protocols-prod-protocols:*:*"
+                      "Fn::Sub": "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/accords-prod-protocols:*:*"
                     }
                   ]
                 },
@@ -77,7 +77,15 @@
                     "dynamodb:UpdateItem",
                     "dynamodb:DeleteItem"
                   ],
-                  "Resource": "arn:aws:dynamodb:us-east-1:*:table/protocols-prod"
+                  "Resource": [
+                    "arn:aws:dynamodb:us-east-1:*:table/accords-prod",
+                    "arn:aws:dynamodb:us-east-1:*:table/accords-prod-index/*",
+                    "arn:aws:dynamodb:us-east-1:*:table/accords-prod-comments",
+                    "arn:aws:dynamodb:us-east-1:*:table/accords-prod-actions",
+                    "arn:aws:dynamodb:us-east-1:*:table/accords-prod-actions-index/*",
+                    "arn:aws:dynamodb:us-east-1:*:table/accords-prod-dossiers",
+                    "arn:aws:dynamodb:us-east-1:*:table/accords-prod-dossiers-index/*"
+                  ]
                 },
                 {
                   "Effect": "Allow",
@@ -95,7 +103,7 @@
           "Fn::Join": [
             "-",
             [
-              "protocols",
+              "accords",
               "prod",
               "us-east-1",
               "lambdaRole"
@@ -111,9 +119,9 @@
           "S3Bucket": {
             "Ref": "ServerlessDeploymentBucket"
           },
-          "S3Key": "serverless/protocols/prod/1516852285226-2018-01-25T03:51:25.226Z/protocols.zip"
+          "S3Key": "serverless/accords/prod/1518120483317-2018-02-08T20:08:03.317Z/accords.zip"
         },
-        "FunctionName": "protocols-prod-protocols",
+        "FunctionName": "accords-prod-protocols",
         "Handler": "index.handler",
         "MemorySize": 1024,
         "Role": {
@@ -126,8 +134,14 @@
         "Timeout": 6,
         "Environment": {
           "Variables": {
-            "SERVICE_NAME": "protocols",
-            "DYNAMODB_TABLE": "protocols-prod"
+            "SERVICE_NAME": "accords",
+            "DYNAMODB_TABLE": "accords-prod",
+            "PROTOCOL_INDEX": "accords-prod-index/*",
+            "COMMENTS_TABLE": "accords-prod-comments",
+            "ACTIONS_TABLE": "accords-prod-actions",
+            "ACTIONS_INDEX": "accords-prod-actions-index/*",
+            "DOSSIERS_TABLE": "accords-prod-dossiers",
+            "DOSSIERS_INDEX": "accords-prod-dossiers-index/*"
           }
         }
       },
@@ -136,20 +150,20 @@
         "IamRoleLambdaExecution"
       ]
     },
-    "ProtocolsLambdaVersionENPHdM4d2IZdc5Mrm02xD7Kqq1Nv57IYC0dXxcjQw0": {
+    "ProtocolsLambdaVersionGlRRrAqGObuPM6Q5FHznVCdPdkYeGAc5FPh0jbZp4": {
       "Type": "AWS::Lambda::Version",
       "DeletionPolicy": "Retain",
       "Properties": {
         "FunctionName": {
           "Ref": "ProtocolsLambdaFunction"
         },
-        "CodeSha256": "ENPHdM4d2IZdc5Mrm02xD7Kqq1Nv57IYC0dXxcjQ/w0="
+        "CodeSha256": "GlRRrAq+GObuPM6Q5FHznVCdPdkYeGAc5FPh0jb/Zp4="
       }
     },
     "ApiGatewayRestApi": {
       "Type": "AWS::ApiGateway::RestApi",
       "Properties": {
-        "Name": "prod-protocols"
+        "Name": "prod-accords"
       }
     },
     "ApiGatewayResourceProxyVar": {
@@ -248,7 +262,7 @@
         "MethodResponses": []
       }
     },
-    "ApiGatewayDeployment1516852285267": {
+    "ApiGatewayDeployment1518120483360": {
       "Type": "AWS::ApiGateway::Deployment",
       "Properties": {
         "RestApiId": {
@@ -297,11 +311,11 @@
     "pathmapping": {
       "Type": "AWS::ApiGateway::BasePathMapping",
       "DependsOn": [
-        "ApiGatewayDeployment1516852285267"
+        "ApiGatewayDeployment1518120483360"
       ],
       "Properties": {
         "BasePath": "(none)",
-        "DomainName": "protocols.scottify.io",
+        "DomainName": "api.scottify.io",
         "RestApiId": {
           "Ref": "ApiGatewayRestApi"
         },
@@ -311,7 +325,7 @@
     "ProtocolsTable": {
       "Type": "AWS::DynamoDB::Table",
       "Properties": {
-        "TableName": "protocols-prod",
+        "TableName": "accords-prod",
         "AttributeDefinitions": [
           {
             "AttributeName": "userId",
@@ -367,6 +381,118 @@
           }
         ]
       }
+    },
+    "CommentsTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "accords-prod-comments",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "protocolNumber",
+            "AttributeType": "N"
+          },
+          {
+            "AttributeName": "commentDate",
+            "AttributeType": "N"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "protocolNumber",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "commentDate",
+            "KeyType": "RANGE"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
+        }
+      }
+    },
+    "ActionsTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "accords-prod-actions",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "actionId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "actionDate",
+            "AttributeType": "N"
+          },
+          {
+            "AttributeName": "userId",
+            "AttributeType": "S"
+          },
+          {
+            "AttributeName": "completed",
+            "AttributeType": "N"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "actionId",
+            "KeyType": "HASH"
+          },
+          {
+            "AttributeName": "actionDate",
+            "KeyType": "RANGE"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
+        },
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "user-actions",
+            "KeySchema": [
+              {
+                "AttributeName": "userId",
+                "KeyType": "HASH"
+              },
+              {
+                "AttributeName": "completed",
+                "KeyType": "RANGE"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 1,
+              "WriteCapacityUnits": 1
+            }
+          }
+        ]
+      }
+    },
+    "DossiersTable": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "TableName": "accords-prod-dossiers",
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "subject",
+            "AttributeType": "S"
+          }
+        ],
+        "KeySchema": [
+          {
+            "AttributeName": "subject",
+            "KeyType": "HASH"
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 1,
+          "WriteCapacityUnits": 1
+        }
+      }
     }
   },
   "Outputs": {
@@ -378,7 +504,7 @@
     "ProtocolsLambdaFunctionQualifiedArn": {
       "Description": "Current Lambda function version",
       "Value": {
-        "Ref": "ProtocolsLambdaVersionENPHdM4d2IZdc5Mrm02xD7Kqq1Nv57IYC0dXxcjQw0"
+        "Ref": "ProtocolsLambdaVersionGlRRrAqGObuPM6Q5FHznVCdPdkYeGAc5FPh0jbZp4"
       }
     },
     "ServiceEndpoint": {
@@ -397,10 +523,10 @@
       }
     },
     "DomainName": {
-      "Value": "protocols.scottify.io"
+      "Value": "api.scottify.io"
     },
     "DistributionDomainName": {
-      "Value": "d1t8rg505u9cqs.cloudfront.net"
+      "Value": "dw5gmilqnylhf.cloudfront.net"
     }
   }
 }

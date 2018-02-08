@@ -22,6 +22,12 @@ app.use(bodyParser.json())
 app.use(cors())
 app.options('*', cors())
 
+const test = (req, res) => {
+  console.log(req)
+  res.status(200).send('works')
+  res.end()
+}
+
 
 
 const logRequest = (req, res, next) => {
@@ -29,14 +35,18 @@ const logRequest = (req, res, next) => {
   next()
 }
 
-app.get('/get/:type', list.list)
+app.get('/proposals/', list.getProposalsParams, list.query)
+app.get('/protocols/', list.getProtocolsParams, list.query)
+app.get('/dossiers/', list.getDossiersParams, list.scan)
+app.post('/proposal/submit/', create.getPostParams, create.post)
 app.put('/proposal/ratify/:userId/:proposalId/:currentUser', update.getNewProtocolNum, update.post)
 app.get('/proposal/:userId/:proposalId', logRequest, get.getProtocol)
 app.put('/proposal/:userId/:proposalId', logRequest, update.post)
 app.put('/proposal/amend/:userId/:proposalId/:currentUser', logRequest, update.post)
 app.get('/protocol/:id', get.getProtocol)
+app.get('/protocol/comments/:id', list.getCommentsParams, list.query)
+app.post('/protocol/:id/comment/:userId', logRequest, create.getCommentParams, create.post)
 app.delete('/protocol/:userId/:proposalId', deleteItem.deleteProposal)
-app.post('/submit-proposal/',  create.post)
 // app.post('/get', parseSubmission, query)
 
 module.exports.handler = serverless(app);
